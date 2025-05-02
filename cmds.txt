@@ -1,0 +1,46 @@
+ec2 Machine:
+ssh -i "stock_market_project.pem" ****amazonaws.com
+
+Kafka Download:
+wget https://downloads.apache.org/kafka/3.7.2/kafka_2.12-3.7.2.tgz
+ls
+tar -xvf kafka_2.12-3.7.2.tgz
+
+Java Download:
+sudo yum install java-17-amazon-corretto -y
+or
+sudo yum install java-1.8.0-amazon-corretto -y
+
+java -version
+cd kafka_2.12-3.7.2
+
+Start Zoo-keeper:
+bin/zookeeper-server-start.sh config/zookeeper.properties
+
+Duplicate the session & enter in a new console --
+
+Start Kafka-server:
+----------------------------------------
+cd kafka_2.12-3.7.2
+export KAFKA_HEAP_OPTS="-Xmx256M -Xms128M"  allocating a certain amount of memory
+bin/kafka-server-start.sh config/server.properties
+
+
+Do a "sudo nano config/server.properties" - change ADVERTISED_LISTENERS to public ip of the EC2 instance
+
+
+Create the topic:
+-----------------------------
+Duplicate the session & enter in a new console --
+cd kafka_2.12-3.3.1
+bin/kafka-topics.sh --create --topic market_1 --bootstrap-server {Put the Public IP of your EC2 Instance:9092}  --replication-factor 1 --partitions 1
+
+Start Producer:
+--------------------------
+bin/kafka-console-producer.sh --topic market_1 --bootstrap-server {Put the Public IP of your EC2 Instance:9092}
+
+Start Consumer:
+-------------------------
+Duplicate the session & enter in a new console --
+cd kafka_2.12-3.3.1
+bin/kafka-console-consumer.sh --topic market_1 --bootstrap-server {Put the Public IP of your EC2 Instance:9092}

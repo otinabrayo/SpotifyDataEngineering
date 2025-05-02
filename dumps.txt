@@ -1,0 +1,13 @@
+# producer.send('kafma', value={'new name':'haweeeh'})
+# producer.flush()
+
+# # Get simplified track info
+# songs = get_all_tracks(access_token, playlist_id)
+
+# # Save to JSON
+# output_path = "playlist_songs_clean.json"
+# with open(output_path, "w", encoding="utf-8") as f:
+#     json.dump(songs, f, ensure_ascii=False, indent=4)
+
+# print(f"✅ Saved {len(songs)} songs to {output_path}")
+

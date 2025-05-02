@@ -1,0 +1,11 @@
+version: '3.8'
+services:
+  spotify_etl:
+    image: airflow_spotify:latest
+    env_file:
+      - .env
+    volumes:
+      - ./airflow:/opt/airflow
+    ports:
+      - '8080:8080'
+    command: airflow standalone
