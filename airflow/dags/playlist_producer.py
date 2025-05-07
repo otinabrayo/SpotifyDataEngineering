@@ -7,10 +7,10 @@ from s3fs import S3FileSystem
 
 from airflow import DAG
 from airflow.operators.python import PythonOperator
+from airflow.operators.trigger_dagrun import TriggerDagRunOperator
 from datetime import datetime, timedelta
 from plugins.email_trigger import EmailTrigger
 from plugins.get_token import Get_Token
-
 
 # Fetching Spotify Data
 def get_all_tracks(access_token, playlist_id):
@@ -58,12 +58,12 @@ def get_all_tracks(access_token, playlist_id):
 # Sending the data to consumer
 def send_to_consumer():
     access_token=Get_Token()
-    playlist_id = "26Hy7b5crDRKPcKNVSoMY0"
+    playlist_id = "37i9dQZF1E4A5nTVr5srnD"
 
     all_songs = get_all_tracks(access_token, playlist_id)
 
     producer = KafkaProducer(
-        bootstrap_servers=['13.60.188.23:9092'],
+        bootstrap_servers=['51.20.31.212:9092'],
         value_serializer=lambda x: dumps(x).encode('utf-8')
     )
 
@@ -89,13 +89,12 @@ def send_to_consumer():
         for song in batch:
             producer.send('kafma', value=batch)
         print(f"✅ Sent batch {i // batch_size + 1} with {len(batch)} songs")
-        sleep(30)
+        sleep(10)
 
         producer.flush()
 
-    if i != total_batches - 1:  # Avoid sleeping after the last batch
-        print("⏳ Waiting a minute before sending the next batch...")
-        sleep(60)
+    if i != total_batches - 1:
+        print(f"⏳ Batches over: With {len(all_songs)} songs processed")
 
 # Mail confirming complete dag
 def sending_mail(context):
@@ -106,11 +105,18 @@ def sending_mail(context):
 
 
 dag = DAG(
-    'spotify_playlist_produce',
+    dag_id='spotify_playlist_produce',
     default_args={'start_date': datetime.now() - timedelta(days=1)},
     catchup=False,
     schedule='0 23 * * *',
     on_success_callback=sending_mail
+)
+
+trigger_consumer = TriggerDagRunOperator(
+    task_id='trigger_consumer',
+    trigger_dag_id='spotify_playlist_consume',
+    wait_for_completion=False,
+    dag=dag
 )
 
 send_to_consumer = PythonOperator(
@@ -119,4 +125,4 @@ send_to_consumer = PythonOperator(
     dag=dag
 )
 
-send_to_consumer
+send_to_consumer >> trigger_consumer
